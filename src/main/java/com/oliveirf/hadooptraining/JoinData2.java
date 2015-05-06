@@ -18,35 +18,34 @@ import org.apache.hadoop.util.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- *  * Hello world!
- *   *
- *    */
 public class JoinData2 {
 
     static List<Text> wikilist = new ArrayList<Text>();
     static List<Text> dbpedialist = new ArrayList<Text>();
 
-    public static class DbpediaMapper extends Mapper<LongWritable, Text, Text, String> {
+    public static class DbpediaMapper extends Mapper<LongWritable, Text, Text,Text> {
         private Text foreign_key = new Text();
 
         @Override
         public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String[] valor = value.toString().split(" ");
-            foreign_key.set(valor[1]);
-	    System.out.println("foreign ="+foreign_key);
-	    context.write(foreign_key, "D" + value.toString());
+            foreign_key.set(valor[0]);
+	    System.err.println("foreign PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP="+foreign_key.toString()+"fsdfsdfsd"+valor[0]);
+	    Text result=new Text("D"+value);
+	    context.write(foreign_key, result);
         }
     }
 
-    public static class WikiMapper extends Mapper<LongWritable, Text, Text, String> {
+    public static class WikiMapper extends Mapper<LongWritable, Text, Text, Text> {
         private Text foreign_key = new Text();
 
         @Override
         public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String[] valor = value.toString().split(" ");
             foreign_key.set(valor[1]);
-            context.write(foreign_key, "W" + value.toString());
+           System.err.println("foreign dentro do wiki="+foreign_key.toString()+"sasasasa"+valor[0]);
+	    Text result=new Text("W"+value);
+            context.write(foreign_key, result);
         }
     }
 
@@ -55,9 +54,11 @@ public class JoinData2 {
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
             wikilist.clear();
             dbpedialist.clear();
-
-            for (Text val : values) {
-                if (val.charAt(0) == 'D') {
+	    //Iterator it = myEntries.iterator();
+        
+	    for (Text val : values) {
+        	 System.err.println("dentro do reducer="+val);
+	        if (val.charAt(0) == 'D') {
                     dbpedialist.add(new Text(val.toString().substring(1)));
                 } else {
                     wikilist.add(new Text(val.toString().substring(1)));
@@ -90,7 +91,7 @@ public class JoinData2 {
         job.setOutputFormatClass(TextOutputFormat.class);
 
         job.setMapOutputKeyClass(Text.class);
-        job.setMapOutputValueClass(String.class);
+        job.setMapOutputValueClass(Text.class);
 
         MultipleInputs.addInputPath(job, wikistats, TextInputFormat.class, WikiMapper.class);
         MultipleInputs.addInputPath(job, dbpedia, TextInputFormat.class, DbpediaMapper.class);
